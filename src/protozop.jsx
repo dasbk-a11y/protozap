@@ -53,7 +53,7 @@ function Nav({ active, goTo }) {
     <nav style={{ background:"var(--plate)", borderBottom:"3px solid var(--red)", display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 28px", height:56, position:"sticky", top:0, zIndex:99 }}>
       <div style={{ display:"flex", alignItems:"center", gap:10 }}>
         <div onClick={() => goTo("home")} style={{ width:36, height:36, background:"var(--red)", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"Oswald,sans-serif", fontWeight:700, fontSize:16, color:"#fff", letterSpacing:1, clipPath:"polygon(4px 0%,100% 0%,calc(100% - 4px) 100%,0% 100%)", cursor:"pointer" }}>PZ</div>
-        <span style={{ fontFamily:"Oswald,sans-serif", fontWeight:700, fontSize:20, color:"var(--bright)", letterSpacing:3 }}>PROTOZOP</span>
+        <span style={{ fontFamily:"Oswald,sans-serif", fontWeight:700, fontSize:20, color:"var(--bright)", letterSpacing:3 }}>PROTOZAP</span>
       </div>
       <div style={{ display:"flex" }}>
         {links.map(l => (
@@ -166,11 +166,11 @@ function About() {
   const facts = [["LOCATION","India"],["FOUNDED","2009"],["MIN ORDER","1 piece"],["LEAD TIME","3–10 working days"],["QUOTE TIME","As little as 24 hours"],["MATERIALS","MS, SS 304/316, Al 5052/6061, GI, Copper, Brass"],["FILE FORMATS","STEP, STP, DXF, IGES"],["EMAIL","proto@protozap.com"]];
   return (
     <div>
-      <SecHead label="// WHO WE ARE" title="About Protozop" />
+      <SecHead label="// WHO WE ARE" title="About Protozap" />
       <div style={{ maxWidth:900, margin:"0 auto", padding:"0 28px 60px" }}>
         <PlateBlock title="// Overview">
           <p style={{ fontSize:13, color:"var(--dim)", lineHeight:1.9 }}>
-            Protozop is a precision sheet metal fabrication shop built for engineers and product teams who need fast, reliable parts without high minimums. We run every process in-house — cutting, forming, welding, assembly, and finishing — so your parts move through production without delays.<br /><br />
+            Protozap is a precision sheet metal fabrication shop built for engineers and product teams who need fast, reliable parts without high minimums. We run every process in-house — cutting, forming, welding, assembly, and finishing — so your parts move through production without delays.<br /><br />
             We specialise in low-volume orders from single prototypes to batches of 500 units. Upload your STEP file, tell us the material and thickness, and receive a quote within 24 hours.
           </p>
         </PlateBlock>
@@ -236,10 +236,14 @@ function Certs() {
 }
 
 // ── Quote ────────────────────────────────────────────────────────
+// Replace YOUR_FORM_ID with your Formspree form ID (free at formspree.io)
+const FORMSPREE_URL = "https://formspree.io/f/YOUR_FORM_ID";
+
 function Quote() {
   const [contact, setContact] = useState({ name:"", company:"", email:"", phone:"" });
   const [parts, setParts] = useState([newPart(1)]);
   const [success, setSuccess] = useState(false);
+  const [sending, setSending] = useState(false);
 
   function newPart(id) { return { id, file:null, material:MATS[0], thickness:"", finish:FINS[0], qty:"1", notes:"" }; }
 
@@ -248,14 +252,29 @@ function Quote() {
   const updatePart = (id, field, val) => setParts(p => p.map(x => x.id===id ? {...x,[field]:val} : x));
   const onFile = (id, e) => { const f = e.target.files[0]; if (f) updatePart(id,"file",f); };
 
-  const submit = () => {
+  const submit = async () => {
     if (!contact.name || !contact.email) { alert("Please enter your name and email."); return; }
-    let body = `NEW QUOTE REQUEST\n\nContact:\nName: ${contact.name}\nCompany: ${contact.company}\nEmail: ${contact.email}\nPhone: ${contact.phone}\n\nParts:\n`;
-    parts.forEach((p,i) => {
-      body += `\nPart ${i+1}:\n  File: ${p.file?p.file.name:"Not uploaded"}\n  Material: ${p.material}\n  Thickness: ${p.thickness} mm\n  Finish: ${p.finish}\n  Qty: ${p.qty}\n  Notes: ${p.notes||"—"}\n`;
+    setSending(true);
+    const fd = new FormData();
+    fd.append("name", contact.name);
+    fd.append("company", contact.company || "—");
+    fd.append("_replyto", contact.email);
+    fd.append("phone", contact.phone || "—");
+    fd.append("_subject", `Quote Request — ${contact.name}`);
+    parts.forEach((p, i) => {
+      if (p.file) fd.append(`part_${i+1}_file`, p.file, p.file.name);
+      fd.append(`part_${i+1}_material`, p.material);
+      fd.append(`part_${i+1}_thickness`, `${p.thickness} mm`);
+      fd.append(`part_${i+1}_finish`, p.finish);
+      fd.append(`part_${i+1}_qty`, p.qty);
+      if (p.notes) fd.append(`part_${i+1}_notes`, p.notes);
     });
-    window.open(`mailto:proto@protozap.com?subject=${encodeURIComponent("Quote Request — "+contact.name)}&body=${encodeURIComponent(body)}`,"_blank");
-    setSuccess(true);
+    try {
+      const res = await fetch(FORMSPREE_URL, { method:"POST", body:fd, headers:{ Accept:"application/json" } });
+      if (res.ok) { setSuccess(true); }
+      else { alert("Submission failed. Please email proto@protozap.com directly."); }
+    } catch { alert("Network error. Please email proto@protozap.com directly."); }
+    setSending(false);
   };
 
   const inp = { width:"100%", background:"var(--plate)", border:"1px solid var(--edge)", color:"var(--bright)", fontFamily:"'Share Tech Mono',monospace", fontSize:13, padding:"10px 12px", outline:"none" };
@@ -267,8 +286,8 @@ function Quote() {
       <div style={{ maxWidth:700, margin:"0 auto", padding:"0 28px 60px" }}>
         {success ? (
           <div style={{ background:"rgba(41,128,185,.15)", border:"1px solid var(--sky)", padding:24, textAlign:"center" }}>
-            <div style={{ fontFamily:"Oswald,sans-serif", fontWeight:700, fontSize:20, color:"var(--bright)", marginBottom:8 }}>EMAIL CLIENT OPENED</div>
-            <p style={{ fontSize:12, color:"var(--dim)", marginBottom:16 }}>Please send the email to complete your request. We respond within 24 hours.</p>
+            <div style={{ fontFamily:"Oswald,sans-serif", fontWeight:700, fontSize:20, color:"var(--bright)", marginBottom:8 }}>REQUEST SUBMITTED</div>
+            <p style={{ fontSize:12, color:"var(--dim)", marginBottom:16 }}>Your files and details have been sent. We respond within 24 hours.</p>
             <button onClick={() => setSuccess(false)} style={{ background:"var(--sky)", color:"#fff", border:"none", fontFamily:"Oswald,sans-serif", fontWeight:700, fontSize:13, letterSpacing:2, padding:"10px 24px", cursor:"pointer" }}>SUBMIT ANOTHER</button>
           </div>
         ) : (
@@ -310,7 +329,7 @@ function Quote() {
             ))}
 
             <button onClick={addPart} style={{ width:"100%", background:"transparent", color:"var(--sky)", border:"1px dashed var(--sky)", fontFamily:"Oswald,sans-serif", fontWeight:700, fontSize:14, letterSpacing:2, padding:14, cursor:"pointer", marginBottom:14 }}>+ ADD PART</button>
-            <button onClick={submit} style={{ width:"100%", background:"var(--red)", color:"#fff", border:"none", fontFamily:"Oswald,sans-serif", fontWeight:700, fontSize:16, letterSpacing:2, padding:16, cursor:"pointer", clipPath:"polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%)" }}>SUBMIT QUOTE REQUEST ›</button>
+            <button onClick={submit} disabled={sending} style={{ width:"100%", background:"var(--red)", color:"#fff", border:"none", fontFamily:"Oswald,sans-serif", fontWeight:700, fontSize:16, letterSpacing:2, padding:16, cursor:sending?"not-allowed":"pointer", clipPath:"polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%)", opacity:sending?0.7:1 }}>{sending ? "SENDING…" : "SUBMIT QUOTE REQUEST ›"}</button>
             <p style={{ textAlign:"center", fontSize:10, color:"var(--mark)", letterSpacing:1, marginTop:10 }}>REQUEST SENT TO proto@protozap.com — RESPONSE WITHIN 24 HOURS</p>
           </>
         )}
@@ -323,7 +342,7 @@ function Quote() {
 function Footer() {
   return (
     <div style={{ background:"var(--plate)", borderTop:"3px solid var(--edge)", padding:28, textAlign:"center" }}>
-      <div style={{ fontFamily:"Oswald,sans-serif", fontWeight:700, fontSize:18, color:"var(--bright)", letterSpacing:4, marginBottom:6 }}>PROTOZOP</div>
+      <div style={{ fontFamily:"Oswald,sans-serif", fontWeight:700, fontSize:18, color:"var(--bright)", letterSpacing:4, marginBottom:6 }}>PROTOZAP</div>
       <div style={{ fontSize:11, color:"var(--mark)", letterSpacing:1 }}>PRECISION SHEET METAL FABRICATION — INDIA — proto@protozap.com — © {new Date().getFullYear()}</div>
     </div>
   );
@@ -344,9 +363,11 @@ export default function App() {
 
   const Section = SECTIONS[active];
   return (
-    <div style={{ backgroundImage:"repeating-linear-gradient(0deg,transparent,transparent 47px,var(--edge) 47px,var(--edge) 48px),repeating-linear-gradient(90deg,transparent,transparent 47px,var(--edge) 47px,var(--edge) 48px)", minHeight:"100vh" }}>
+    <div style={{ backgroundImage:"repeating-linear-gradient(0deg,transparent,transparent 47px,var(--edge) 47px,var(--edge) 48px),repeating-linear-gradient(90deg,transparent,transparent 47px,var(--edge) 47px,var(--edge) 48px)", minHeight:"100vh", display:"flex", flexDirection:"column" }}>
       <Nav active={active} goTo={setActive} />
-      <Section goTo={setActive} />
+      <div style={{ flex:1 }}>
+        <Section goTo={setActive} />
+      </div>
       <Footer />
     </div>
   );
