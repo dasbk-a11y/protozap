@@ -44,42 +44,85 @@ const css = `
   }
   body { background: var(--steel); color: var(--text); font-family: 'Share Tech Mono', monospace; font-size: 14px; }
   input, select, textarea, button { font-family: 'Share Tech Mono', monospace; }
+  input, select, textarea { -webkit-appearance: none; border-radius: 0; }
 `;
+
+// ── Mobile hook ───────────────────────────────────────────────────
+function useIsMobile() {
+  const [mobile, setMobile] = useState(() => window.innerWidth < 640);
+  useEffect(() => {
+    const handler = () => setMobile(window.innerWidth < 640);
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
+  return mobile;
+}
 
 // ── Nav ──────────────────────────────────────────────────────────
 function Nav({ active, goTo }) {
   const links = ["home","services","capabilities","about","certs","quote"];
+  const [open, setOpen] = useState(false);
+  const isMobile = useIsMobile();
+
+  const handleNav = (l) => { goTo(l); setOpen(false); };
+
   return (
-    <nav style={{ background:"var(--plate)", borderBottom:"3px solid var(--red)", display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 28px", height:56, position:"sticky", top:0, zIndex:99 }}>
-      <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-        <div onClick={() => goTo("home")} style={{ width:36, height:36, background:"var(--red)", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"Oswald,sans-serif", fontWeight:700, fontSize:16, color:"#fff", letterSpacing:1, clipPath:"polygon(4px 0%,100% 0%,calc(100% - 4px) 100%,0% 100%)", cursor:"pointer" }}>PZ</div>
-        <span style={{ fontFamily:"Oswald,sans-serif", fontWeight:700, fontSize:20, color:"var(--bright)", letterSpacing:3 }}>PROTOZAP</span>
-      </div>
-      <div style={{ display:"flex" }}>
-        {links.map(l => (
-          <button key={l} onClick={() => goTo(l)} style={{
-            background:"transparent", border:"none", borderLeft:"1px solid var(--edge)",
-            borderBottom: active===l ? "3px solid var(--red)" : "none",
-            marginBottom: active===l ? -3 : 0,
-            color: l==="quote" ? "var(--red)" : active===l ? "var(--red)" : "var(--dim)",
-            fontFamily:"Oswald,sans-serif", fontWeight:500, fontSize:13, letterSpacing:2,
-            padding:"18px 16px", cursor:"pointer", textTransform:"uppercase",
-          }}>{l}</button>
-        ))}
-      </div>
-    </nav>
+    <>
+      <nav style={{ background:"var(--plate)", borderBottom:"3px solid var(--red)", display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 20px", height:56, position:"sticky", top:0, zIndex:99 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+          <div onClick={() => handleNav("home")} style={{ width:36, height:36, background:"var(--red)", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"Oswald,sans-serif", fontWeight:700, fontSize:16, color:"#fff", letterSpacing:1, clipPath:"polygon(4px 0%,100% 0%,calc(100% - 4px) 100%,0% 100%)", cursor:"pointer", flexShrink:0 }}>PZ</div>
+          <span style={{ fontFamily:"Oswald,sans-serif", fontWeight:700, fontSize:20, color:"var(--bright)", letterSpacing:3 }}>PROTOZAP</span>
+        </div>
+        {isMobile ? (
+          <button onClick={() => setOpen(o => !o)} style={{ background:"transparent", border:"none", color:"var(--bright)", cursor:"pointer", padding:"8px 4px", display:"flex", flexDirection:"column", gap:5, alignItems:"center" }} aria-label="Menu">
+            {open
+              ? <span style={{ fontFamily:"Oswald,sans-serif", fontWeight:700, fontSize:20, lineHeight:1, color:"var(--dim)" }}>✕</span>
+              : <>{[0,1,2].map(i => <span key={i} style={{ display:"block", width:22, height:2, background:"var(--bright)" }} />)}</>
+            }
+          </button>
+        ) : (
+          <div style={{ display:"flex" }}>
+            {links.map(l => (
+              <button key={l} onClick={() => handleNav(l)} style={{
+                background:"transparent", border:"none", borderLeft:"1px solid var(--edge)",
+                borderBottom: active===l ? "3px solid var(--red)" : "none",
+                marginBottom: active===l ? -3 : 0,
+                color: l==="quote" ? "var(--red)" : active===l ? "var(--red)" : "var(--dim)",
+                fontFamily:"Oswald,sans-serif", fontWeight:500, fontSize:13, letterSpacing:2,
+                padding:"18px 16px", cursor:"pointer", textTransform:"uppercase",
+              }}>{l}</button>
+            ))}
+          </div>
+        )}
+      </nav>
+      {isMobile && open && (
+        <div style={{ position:"fixed", top:56, left:0, right:0, background:"var(--plate)", borderBottom:"2px solid var(--red)", zIndex:98, boxShadow:"0 8px 24px rgba(0,0,0,.5)" }}>
+          {links.map(l => (
+            <button key={l} onClick={() => handleNav(l)} style={{
+              display:"block", width:"100%", background: active===l ? "rgba(192,57,43,.12)" : "transparent",
+              border:"none", borderBottom:"1px solid var(--edge)",
+              color: l==="quote" ? "var(--red)" : active===l ? "var(--red)" : "var(--bright)",
+              fontFamily:"Oswald,sans-serif", fontWeight:500, fontSize:14, letterSpacing:3,
+              padding:"16px 20px", cursor:"pointer", textTransform:"uppercase", textAlign:"left",
+            }}>{l}</button>
+          ))}
+        </div>
+      )}
+    </>
   );
 }
 
 // ── Home ─────────────────────────────────────────────────────────
 function Home({ goTo }) {
+  const isMobile = useIsMobile();
+  const px = isMobile ? 16 : 28;
   return (
-    <div style={{ padding:"64px 28px 48px", maxWidth:900, margin:"0 auto" }}>
+    <div style={{ padding:`${isMobile ? 40 : 64}px ${px}px 48px`, maxWidth:900, margin:"0 auto" }}>
       <div style={{ display:"inline-flex", alignItems:"center", gap:8, background:"var(--panel)", border:"1px solid var(--edge)", padding:"5px 14px", marginBottom:24 }}>
-        <div style={{ width:7, height:7, background:"var(--red)" }} />
+        <div style={{ width:7, height:7, background:"var(--red)", flexShrink:0 }} />
         <span style={{ fontSize:11, letterSpacing:2, color:"var(--yellow)" }}>QUOTES IN AS LITTLE AS 24 HOURS</span>
       </div>
-      <h1 style={{ fontFamily:"Oswald,sans-serif", fontWeight:700, fontSize:"clamp(36px,6vw,64px)", lineHeight:1, color:"var(--bright)", letterSpacing:2, textTransform:"uppercase", marginBottom:8 }}>
+      <h1 style={{ fontFamily:"Oswald,sans-serif", fontWeight:700, fontSize:"clamp(32px,8vw,64px)", lineHeight:1, color:"var(--bright)", letterSpacing:2, textTransform:"uppercase", marginBottom:8 }}>
         PRECISION<br /><span style={{ color:"var(--sky)" }}>SHEET METAL</span><br />FABRICATION
       </h1>
       <p style={{ fontSize:13, color:"var(--dim)", lineHeight:1.8, maxWidth:520, margin:"20px 0 32px", borderLeft:"3px solid var(--red)", paddingLeft:14 }}>
@@ -93,10 +136,10 @@ function Home({ goTo }) {
           OUR SERVICES
         </button>
       </div>
-      <div style={{ display:"flex", marginTop:48, border:"1px solid var(--edge)", width:"fit-content", flexWrap:"wrap" }}>
-        {[["24H","QUOTE TURNAROUND"],["15+","YEARS EXPERIENCE"],["500+","HAPPY CLIENTS"],["1PC","MINIMUM ORDER"]].map(([n,l]) => (
-          <div key={l} style={{ padding:"18px 32px", borderRight:"1px solid var(--edge)" }}>
-            <div style={{ fontFamily:"Oswald,sans-serif", fontWeight:700, fontSize:32, color:"var(--red)" }}>{n}</div>
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", marginTop:48, border:"1px solid var(--edge)", width: isMobile ? "100%" : "fit-content" }}>
+        {[["24H","QUOTE TURNAROUND"],["15+","YEARS EXPERIENCE"],["500+","HAPPY CLIENTS"],["1PC","MINIMUM ORDER"]].map(([n,l],i) => (
+          <div key={l} style={{ padding: isMobile ? "16px 20px" : "18px 32px", borderRight: i%2===0 ? "1px solid var(--edge)" : "none", borderBottom: i < 2 ? "1px solid var(--edge)" : "none" }}>
+            <div style={{ fontFamily:"Oswald,sans-serif", fontWeight:700, fontSize: isMobile ? 26 : 32, color:"var(--red)" }}>{n}</div>
             <div style={{ fontSize:10, letterSpacing:2, color:"var(--dim)", marginTop:2 }}>{l}</div>
           </div>
         ))}
@@ -107,10 +150,11 @@ function Home({ goTo }) {
 
 // ── Section Header ───────────────────────────────────────────────
 function SecHead({ label, title }) {
+  const isMobile = useIsMobile();
   return (
-    <div style={{ padding:"48px 28px 0", maxWidth:900, margin:"0 auto 36px" }}>
+    <div style={{ padding:`48px ${isMobile ? 16 : 28}px 0`, maxWidth:900, margin:"0 auto 36px" }}>
       <div style={{ fontSize:10, letterSpacing:3, color:"var(--red)", marginBottom:10 }}>{label}</div>
-      <h2 style={{ fontFamily:"Oswald,sans-serif", fontWeight:700, fontSize:28, color:"var(--bright)", textTransform:"uppercase", letterSpacing:2, paddingBottom:12, borderBottom:"2px solid var(--edge)", display:"flex", alignItems:"center", gap:12 }}>
+      <h2 style={{ fontFamily:"Oswald,sans-serif", fontWeight:700, fontSize: isMobile ? 22 : 28, color:"var(--bright)", textTransform:"uppercase", letterSpacing:2, paddingBottom:12, borderBottom:"2px solid var(--edge)", display:"flex", alignItems:"center", gap:12 }}>
         <span style={{ color:"var(--mark)", fontSize:20 }}>{"//"}</span>{title}
       </h2>
     </div>
@@ -120,10 +164,11 @@ function SecHead({ label, title }) {
 // ── Services ─────────────────────────────────────────────────────
 function Services() {
   const [hov, setHov] = useState(null);
+  const isMobile = useIsMobile();
   return (
     <div>
       <SecHead label="// WHAT WE DO" title="Services" />
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))", gap:2, maxWidth:900, margin:"0 auto", padding:"0 28px 48px" }}>
+      <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fit,minmax(260px,1fr))", gap:2, maxWidth:900, margin:"0 auto", padding:`0 ${isMobile ? 16 : 28}px 48px` }}>
         {SERVICES.map((s,i) => (
           <div key={s.num} onMouseEnter={() => setHov(i)} onMouseLeave={() => setHov(null)}
             style={{ background:"var(--panel)", border:`1px solid ${hov===i?"var(--sky)":"var(--edge)"}`, padding:"24px 22px", position:"relative", overflow:"hidden", transition:"border-color .2s" }}>
@@ -141,19 +186,21 @@ function Services() {
 // ── Capabilities ─────────────────────────────────────────────────
 function Capabilities() {
   const [open, setOpen] = useState(null);
+  const isMobile = useIsMobile();
   return (
     <div>
       <SecHead label="// MACHINES & PROCESSES" title="Capabilities" />
-      <div style={{ maxWidth:900, margin:"0 auto", padding:"0 28px 48px" }}>
+      <div style={{ maxWidth:900, margin:"0 auto", padding:`0 ${isMobile ? 16 : 28}px 48px` }}>
         {PROCS.map((p,i) => (
           <div key={p.n} onClick={() => setOpen(open===i?null:i)}
             style={{ borderBottom:`1px solid ${open===i?"var(--sky)":"var(--edge)"}`, cursor:"pointer", background: open===i?"rgba(41,128,185,.06)":"transparent", transition:"background .15s" }}>
             <div style={{ display:"flex", alignItems:"flex-start" }}>
-              <div style={{ fontFamily:"Oswald,sans-serif", fontWeight:700, fontSize:13, color:"var(--mark)", minWidth:52, padding:"16px 0" }}>{String(i+1).padStart(2,"0")}</div>
-              <div style={{ fontFamily:"Oswald,sans-serif", fontWeight:500, fontSize:15, color:"var(--bright)", flex:1, padding:"16px 0", letterSpacing:1, textTransform:"uppercase" }}>{p.n}</div>
-              <div style={{ fontSize:10, color:"var(--sky)", letterSpacing:2, padding:"18px 0 16px", minWidth:100, textAlign:"right" }}>{p.c}</div>
+              <div style={{ fontFamily:"Oswald,sans-serif", fontWeight:700, fontSize:13, color:"var(--mark)", minWidth:isMobile ? 36 : 52, padding:"16px 0" }}>{String(i+1).padStart(2,"0")}</div>
+              <div style={{ fontFamily:"Oswald,sans-serif", fontWeight:500, fontSize: isMobile ? 13 : 15, color:"var(--bright)", flex:1, padding:"16px 0", letterSpacing:1, textTransform:"uppercase", paddingRight:8 }}>{p.n}</div>
+              {!isMobile && <div style={{ fontSize:10, color:"var(--sky)", letterSpacing:2, padding:"18px 0 16px", minWidth:100, textAlign:"right" }}>{p.c}</div>}
             </div>
-            {open===i && <div style={{ fontSize:12, color:"var(--dim)", lineHeight:1.8, padding:"0 0 14px 52px" }}>{p.d}</div>}
+            {isMobile && open===i && <div style={{ fontSize:10, color:"var(--sky)", letterSpacing:2, paddingBottom:4, paddingLeft:36 }}>{p.c}</div>}
+            {open===i && <div style={{ fontSize:12, color:"var(--dim)", lineHeight:1.8, padding:`0 0 14px ${isMobile ? 36 : 52}px` }}>{p.d}</div>}
           </div>
         ))}
       </div>
@@ -163,11 +210,12 @@ function Capabilities() {
 
 // ── About ────────────────────────────────────────────────────────
 function About() {
+  const isMobile = useIsMobile();
   const facts = [["LOCATION","India"],["FOUNDED","2009"],["MIN ORDER","1 piece"],["LEAD TIME","3–10 working days"],["QUOTE TIME","As little as 24 hours"],["MATERIALS","MS, SS 304/316, Al 5052/6061, GI, Copper, Brass"],["FILE FORMATS","STEP, STP, DXF, IGES"],["EMAIL","proto@protozap.com"]];
   return (
     <div>
       <SecHead label="// WHO WE ARE" title="About Protozap" />
-      <div style={{ maxWidth:900, margin:"0 auto", padding:"0 28px 60px" }}>
+      <div style={{ maxWidth:900, margin:"0 auto", padding:`0 ${isMobile ? 16 : 28}px 60px` }}>
         <PlateBlock title="// Overview">
           <p style={{ fontSize:13, color:"var(--dim)", lineHeight:1.9 }}>
             Protozap is a precision sheet metal fabrication shop built for engineers and product teams who need fast, reliable parts without high minimums. We run every process in-house — cutting, forming, welding, assembly, and finishing — so your parts move through production without delays.<br /><br />
@@ -179,7 +227,7 @@ function About() {
             <tbody>
               {facts.map(([k,v]) => (
                 <tr key={k}>
-                  <td style={{ padding:"9px 12px", borderBottom:"1px solid var(--edge)", fontSize:12, color:"var(--dim)", width:140 }}>{k}</td>
+                  <td style={{ padding:"9px 12px", borderBottom:"1px solid var(--edge)", fontSize:12, color:"var(--dim)", width: isMobile ? 110 : 140, verticalAlign:"top" }}>{k}</td>
                   <td style={{ padding:"9px 12px", borderBottom:"1px solid var(--edge)", fontSize:12, color:"var(--bright)" }}>{v}</td>
                 </tr>
               ))}
@@ -210,23 +258,24 @@ function Certs() {
     {code:"GST",label:"Goods & Services Tax registered and fully compliant — GSTIN verified.",status:"VERIFIED"},
   ];
   const [hov, setHov] = useState(null);
+  const isMobile = useIsMobile();
   return (
     <div>
       <SecHead label="// QUALITY & COMPLIANCE" title="Certifications" />
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))", gap:2, maxWidth:900, margin:"0 auto", padding:"0 28px 24px" }}>
+      <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(auto-fit,minmax(200px,1fr))", gap:2, maxWidth:900, margin:"0 auto", padding:`0 ${isMobile ? 16 : 28}px 24px` }}>
         {certs.map((c,i) => (
           <div key={c.code} onMouseEnter={() => setHov(i)} onMouseLeave={() => setHov(null)}
-            style={{ background:"var(--panel)", border:`1px solid ${hov===i?"var(--sky)":"var(--edge)"}`, padding:"22px 20px", transition:"border-color .2s" }}>
+            style={{ background:"var(--panel)", border:`1px solid ${hov===i?"var(--sky)":"var(--edge)"}`, padding: isMobile ? "16px 14px" : "22px 20px", transition:"border-color .2s" }}>
             <div style={{ display:"flex", gap:8, marginBottom:10 }}>
               {[0,1].map(j => <div key={j} style={{ width:8, height:8, borderRadius:"50%", background:"var(--mark)", border:"1px solid var(--edge)" }} />)}
             </div>
-            <div style={{ fontFamily:"Oswald,sans-serif", fontWeight:700, fontSize:18, color:"var(--bright)", letterSpacing:1, marginBottom:6 }}>{c.code}</div>
+            <div style={{ fontFamily:"Oswald,sans-serif", fontWeight:700, fontSize: isMobile ? 14 : 18, color:"var(--bright)", letterSpacing:1, marginBottom:6 }}>{c.code}</div>
             <div style={{ fontSize:11, color:"var(--dim)", lineHeight:1.6, marginBottom:10 }}>{c.label}</div>
             <div style={{ fontSize:10, letterSpacing:2, color:"var(--yellow)" }}>{c.status}</div>
           </div>
         ))}
       </div>
-      <div style={{ maxWidth:900, margin:"0 auto", padding:"0 28px 60px" }}>
+      <div style={{ maxWidth:900, margin:"0 auto", padding:`0 ${isMobile ? 16 : 28}px 60px` }}>
         <PlateBlock title="// Quality Assurance">
           <p style={{ fontSize:13, color:"var(--dim)", lineHeight:1.9 }}>Every part is dimensionally inspected before dispatch. We maintain first-article inspection reports, material test certificates, and full traceability records on all orders. Customers can request inspection reports for any batch.</p>
         </PlateBlock>
@@ -244,6 +293,7 @@ function Quote() {
   const [parts, setParts] = useState([newPart(1)]);
   const [success, setSuccess] = useState(false);
   const [sending, setSending] = useState(false);
+  const isMobile = useIsMobile();
 
   function newPart(id) { return { id, file:null, material:MATS[0], thickness:"", finish:FINS[0], qty:"1", notes:"" }; }
 
@@ -279,11 +329,12 @@ function Quote() {
 
   const inp = { width:"100%", background:"var(--plate)", border:"1px solid var(--edge)", color:"var(--bright)", fontFamily:"'Share Tech Mono',monospace", fontSize:13, padding:"10px 12px", outline:"none" };
   const lbl = { display:"block", fontSize:10, letterSpacing:2, color:"var(--dim)", marginBottom:6 };
+  const px = isMobile ? 16 : 28;
 
   return (
     <div>
       <SecHead label="// UPLOAD YOUR PARTS" title="Get a Quote" />
-      <div style={{ maxWidth:700, margin:"0 auto", padding:"0 28px 60px" }}>
+      <div style={{ maxWidth:700, margin:"0 auto", padding:`0 ${px}px 60px` }}>
         {success ? (
           <div style={{ background:"rgba(41,128,185,.15)", border:"1px solid var(--sky)", padding:24, textAlign:"center" }}>
             <div style={{ fontFamily:"Oswald,sans-serif", fontWeight:700, fontSize:20, color:"var(--bright)", marginBottom:8 }}>REQUEST SUBMITTED</div>
@@ -294,7 +345,7 @@ function Quote() {
           <>
             {/* Contact */}
             <PlateBlock title="// Contact Details">
-              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14, marginBottom:14 }}>
+              <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap:14, marginBottom:14 }}>
                 {[["name","FULL NAME *","text"],["company","COMPANY","text"],["email","EMAIL *","email"],["phone","PHONE / WHATSAPP","text"]].map(([f,l,t]) => (
                   <div key={f}>
                     <label style={lbl}>{l}</label>
@@ -315,10 +366,10 @@ function Quote() {
                 </div>
                 <label style={{ display:"block", border:"1px dashed var(--sky)", padding:18, textAlign:"center", cursor:"pointer", marginBottom:14 }}>
                   <input type="file" accept=".step,.stp,.dxf,.iges,.igs" style={{ display:"none" }} onChange={e => onFile(part.id, e)} />
-                  <div style={{ fontSize:11, color:"var(--dim)", letterSpacing:1 }}>CLICK TO UPLOAD — STEP / STP / DXF / IGES</div>
+                  <div style={{ fontSize:11, color:"var(--dim)", letterSpacing:1 }}>TAP TO UPLOAD — STEP / STP / DXF / IGES</div>
                   {part.file && <div style={{ fontSize:12, color:"var(--sky)", marginTop:4 }}>[ {part.file.name} ]</div>}
                 </label>
-                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14, marginBottom:14 }}>
+                <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap:14, marginBottom:14 }}>
                   <div><label style={lbl}>MATERIAL *</label><select style={{...inp, cursor:"pointer"}} value={part.material} onChange={e => updatePart(part.id,"material",e.target.value)}>{MATS.map(m => <option key={m}>{m}</option>)}</select></div>
                   <div><label style={lbl}>THICKNESS (mm) *</label><input style={inp} placeholder="e.g. 1.5" value={part.thickness} onChange={e => updatePart(part.id,"thickness",e.target.value)} /></div>
                   <div><label style={lbl}>FINISH</label><select style={{...inp, cursor:"pointer"}} value={part.finish} onChange={e => updatePart(part.id,"finish",e.target.value)}>{FINS.map(f => <option key={f}>{f}</option>)}</select></div>
