@@ -111,7 +111,7 @@ function SecHead({ label, title }) {
     <div style={{ padding:"48px 28px 0", maxWidth:900, margin:"0 auto 36px" }}>
       <div style={{ fontSize:10, letterSpacing:3, color:"var(--red)", marginBottom:10 }}>{label}</div>
       <h2 style={{ fontFamily:"Oswald,sans-serif", fontWeight:700, fontSize:28, color:"var(--bright)", textTransform:"uppercase", letterSpacing:2, paddingBottom:12, borderBottom:"2px solid var(--edge)", display:"flex", alignItems:"center", gap:12 }}>
-        <span style={{ color:"var(--mark)", fontSize:20 }}>//</span>{title}
+        <span style={{ color:"var(--mark)", fontSize:20 }}>{"//"}</span>{title}
       </h2>
     </div>
   );
@@ -289,7 +289,7 @@ function Quote() {
             {parts.map((part, idx) => (
               <div key={part.id} style={{ background:"var(--panel)", border:"1px solid var(--edge)", padding:"20px 20px 14px", marginBottom:14 }}>
                 <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
-                  <div style={{ fontFamily:"Oswald,sans-serif", fontWeight:700, fontSize:13, color:"var(--yellow)", letterSpacing:2 }}>// PART {idx+1}</div>
+                  <div style={{ fontFamily:"Oswald,sans-serif", fontWeight:700, fontSize:13, color:"var(--yellow)", letterSpacing:2 }}>{"//"} PART {idx+1}</div>
                   {parts.length > 1 && (
                     <button onClick={() => removePart(part.id)} style={{ background:"transparent", color:"var(--sky)", border:"1px solid var(--sky)", fontFamily:"Oswald,sans-serif", fontWeight:700, fontSize:11, letterSpacing:1, padding:"4px 12px", cursor:"pointer" }}>REMOVE</button>
                   )}
